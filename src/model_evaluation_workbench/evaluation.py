@@ -13,12 +13,16 @@ import shap
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error, r2_score
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_squared_error,
+    r2_score,
+)
 from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBRegressor
-
 
 NUMERIC_FEATURES = [
     "annual_spend",
@@ -181,8 +185,8 @@ def evaluate_models(
         )
         cv_mae = -cross_val_score(
             pipeline,
-            features,
-            target,
+            x_train,
+            y_train,
             cv=splitter,
             scoring="neg_mean_absolute_error",
             n_jobs=1,
@@ -211,6 +215,7 @@ def evaluate_models(
         "dataset_rows": len(dataset),
         "train_rows": len(x_train),
         "held_out_rows": len(x_test),
+        "cross_validation_rows": len(x_train),
         "seed": seed,
         "cv_folds": cv_folds,
         "models": {name: asdict(metrics) for name, metrics in all_metrics.items()},

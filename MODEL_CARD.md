@@ -1,8 +1,8 @@
-# Model card
+# Model Card
 
 ## Purpose
 
-This workbench compares XGBoost and Random Forest regressors under one evaluation contract. It demonstrates held-out testing, cross-validation, residual inspection, model serialization, and SHAP attribution.
+This workbench compares XGBoost and Random Forest regressors under one evaluation contract. It demonstrates held-out testing, training-only cross-validation, residual inspection, model serialization, and SHAP attribution.
 
 ## Dataset
 
@@ -10,20 +10,27 @@ Every row is synthetic. Inputs describe annual spend, audience reach, activation
 
 ## Evaluation
 
-- 80/20 held-out split;
-- shuffled K-fold cross-validation;
-- R-squared, MAE, RMSE, MAPE, and residual quantiles;
-- mean absolute SHAP magnitude on a bounded held-out sample.
+- seeded 80/20 train and held-out split;
+- shuffled K-fold cross-validation over only the 80% training partition;
+- preprocessing refitted independently inside each fold;
+- held-out R-squared, MAE, RMSE, MAPE, and residual quantiles;
+- mean absolute SHAP magnitude over a bounded held-out sample;
+- persisted-bundle reload and inference check.
 
 ## Intended use
 
 - demonstrate a reproducible evaluation workflow;
 - compare model behavior under identical inputs and splits;
-- inspect how model choice changes error and feature attribution.
+- inspect how model choice changes errors and feature attribution.
 
 ## Limitations
 
 - Synthetic performance does not predict accuracy on customer data.
 - SHAP explains fitted model behavior, not causal effects.
-- This project does not establish production latency, scale, or reliability.
-- A real deployment would require data contracts, drift monitoring, access controls, and domain review.
+- Fixed estimator configurations are compared; no hyperparameter-search claim is made.
+- This project does not establish production latency, scale, drift resilience, or reliability.
+- A real deployment would require data contracts, monitoring, access controls, domain review, and a decision-specific acceptance threshold.
+
+## Artifact safety
+
+The saved bundles use joblib/pickle-compatible serialization. Load only artifacts created locally or obtained from a trusted source.

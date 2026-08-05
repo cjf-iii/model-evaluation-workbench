@@ -1,29 +1,37 @@
 # Verification Record
 
-Verified locally on August 4, 2026.
+Recorded August 4, 2026.
 
-## Host
+## Release gate
 
-- macOS 26.6;
-- Apple M3 Max, 40-core GPU;
-- ARM64;
-- Metal 4;
-- Python 3.12.13.
+```bash
+uv sync --locked --group dev --group notebook
+uv run ruff check .
+uv run ruff format --check .
+uv run python -m unittest discover -s tests -v
+uv run --group notebook jupyter nbconvert --to notebook --execute notebooks/01_data_to_validation.ipynb --stdout > /dev/null
+uv run model-eval --rows 500 --estimators 50 --cv-folds 3 --output artifacts
+uv run python scripts/verify_artifacts.py
+```
 
-## Result
+## Acceptance criteria
 
-The Metal preflight passed and all 3 unit tests passed. A separate 500-row smoke evaluation completed held-out testing, three-fold cross-validation, residual analysis, SHAP attribution, and model serialization for both estimators.
+- one locked `uv` environment on Python 3.12;
+- public CPU-based GitHub Actions workflow;
+- deterministic synthetic-data and validation tests;
+- every reviewer-notebook cell executes in the locked notebook environment;
+- 80/20 held-out split with cross-validation confined to training rows;
+- both estimators produce complete metrics, residuals, predictions, SHAP tables, and bundles;
+- both saved bundles reload and score a source row;
+- held-out R-squared above 0.50 for this documented synthetic verification run.
+
+## Recorded result
+
+All 4 tests and every reviewer-notebook cell passed, including SHAP output for both estimators. The full run generated 500 rows, reserved 100 for held-out evaluation, and confined three-fold cross-validation to the remaining 400 training rows.
 
 | Model | Held-out R² | MAE | CV MAE |
 |---|---:|---:|---:|
-| XGBoost | 0.6367 | 3.9657 | 3.6954 |
-| Random Forest | 0.6330 | 3.8728 | 3.5257 |
+| XGBoost | 0.6367 | 3.9657 | 3.6438 |
+| Random Forest | 0.6330 | 3.8728 | 3.4501 |
 
-## Reproduce
-
-```bash
-./scripts/verify_macos_metal.sh
-uv sync --python 3.12
-uv run python -m unittest discover -s tests -v
-uv run model-eval --rows 500 --estimators 50 --cv-folds 3 --output artifacts
-```
+Both SHAP tables were populated, all 100 held-out predictions and residuals were preserved, and both locally generated joblib bundles reloaded and scored a source row.
